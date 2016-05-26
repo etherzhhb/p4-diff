@@ -93,8 +93,8 @@ def generateDeletedFileDiffFromShelved(changelist,depot_path,file_revision):
     lines[0] = lines[0].replace(tmp.name,depot_path)
     print '\n'.join(lines)
 
-def generateEditFileDiff(depot_path):
-    command = getP4Command() + ['diff','-du',depot_path]
+def generateEditFileDiff(depot_path, context):
+    command = getP4Command() + ['diff','-du'.format(context),depot_path]
     (diff,_) = runCommand(command)
     if len(diff.split('\n')) != 3:
         print diff
@@ -103,8 +103,8 @@ def generateEditFileDiff(depot_path):
         print 'Empty diff detected for {}'.format(depot_path)
     return ''
 
-def generateEditFileDiffFromShelved(base_revision, changelist,depot_path):
-    command = getP4Command() + ['diff2','-u','{}#{}'.format(depot_path,base_revision),'{}@={}'.format(depot_path,changelist)]
+def generateEditFileDiffFromShelved(base_revision, changelist,depot_path, context):
+    command = getP4Command() + ['diff2', '-u', '-du{}'.format(context),'{}#{}'.format(depot_path,base_revision),'{}@={}'.format(depot_path,changelist)]
     (diff,_) = runCommand(command)
     if len(diff.split('\n')) != 1:
         print diff
@@ -157,6 +157,8 @@ def main():
     p.add_argument('--ticket','-t',metavar='P4TICKET',help='If required, use a P4TICKET to authenticate.')
     p.add_argument('--verbose','-v',action='store_true',help='Enable verbose output useful such as executing Perforce commands. Note, this will corrupt the diff output')
 
+    p.add_argument('--context', '-C', metavar='N', type=int, default=9999, help='Generate diffs with <n> lines of context instead of the usual three')
+
     options = p.parse_args()
 
     if not userHasPerforce():
@@ -164,6 +166,7 @@ def main():
         exit(1)
     
     changelist = options.changelist
+    context = options.context
 
     global Verbose
     Verbose = options.verbose
@@ -189,9 +192,9 @@ def main():
                     generateFileDiff(True,local_f)
             elif op == 'edit' or op == 'integrate':
                 if options.shelved:
-                    generateEditFileDiffFromShelved(file_revision,changelist,f)
+                    generateEditFileDiffFromShelved(file_revision,changelist,f,context)
                 else:
-                    generateEditFileDiff(f)
+                    generateEditFileDiff(f,context)
             elif op == 'delete' or op == 'move/delete':
                 if options.shelved:
                     generateDeletedFileDiffFromShelved(changelist,f,file_revision)
