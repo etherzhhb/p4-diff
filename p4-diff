@@ -94,7 +94,7 @@ def generateDeletedFileDiffFromShelved(changelist,depot_path,file_revision):
     print '\n'.join(lines)
 
 def generateEditFileDiff(depot_path, context):
-    command = getP4Command() + ['diff','-du'.format(context),depot_path]
+    command = getP4Command() + ['diff','-du{}'.format(context),depot_path]
     (diff,_) = runCommand(command)
     if len(diff.split('\n')) != 3:
         print diff
